@@ -10,6 +10,8 @@
 #include <math.h> // For sqrt()
 #include <stdlib.h> // For rand()
 
+#include <vector>
+
 static ID3D11Device* g_pd3dDevice = nullptr;
 static ID3D11DeviceContext* g_pd3dDeviceContext = nullptr;
 static IDXGISwapChain* g_pSwapChain = nullptr;
@@ -24,12 +26,14 @@ void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 struct Enemy {
-    ImVec2 position; // Current X, Y
-    ImVec2 velocity; // Speed X, Speed Y
-    bool active;     // Is it currently on screen?
+    ImVec2 position; 
+    ImVec2 velocity; 
 };
 
-static Enemy my_enemy = { ImVec2(0,0), ImVec2(0,0), false };
+static std::vector<Enemy> enemies;
+
+static float spawn_timer = 0.0f;
+static float current_spawn_rate = 2.0f; // Start: Spawn 1 enemy every 2 seconds
 
 static float pos_x = 100.0f;
 static float pos_y = 100.0f;
@@ -40,8 +44,6 @@ const float COOLDOWN_TIME   = 1.5f;  // Must wait 1.5 seconds if overheated
 static float sprint_timer   = 0.0f;  // How long we've been running
 static float cooldown_timer = 0.0f;  // Timer for the penalty
 
-float base_speed = 150.0f;
-
 int game_state = 0; 
 
 int score = 0;
@@ -49,11 +51,17 @@ int high_score = 0;
 
 void ResetGame() {
     score = 0;
-    my_enemy.active = false; 
+    high_score = (score > high_score) ? score : high_score;
+    
     pos_x = 100.0f;
     pos_y = 100.0f;
     sprint_timer = 0.0f;
     cooldown_timer = 0.0f;
+
+    enemies.clear();
+
+    spawn_timer = 0.0f;
+    current_spawn_rate = 2.0f; // Reset to easy mode
 }
 
 bool LoadTextureFromFile(const char* filename, ID3D11ShaderResourceView** out_srv, int* out_width, int* out_height)
@@ -192,7 +200,7 @@ int main(int, char**)
             float btn_width = 100.0f;
             ImGui::SetCursorPos(ImVec2((win_size.x - btn_width) * 0.5f, win_size.y * 0.5f));
             
-            if (ImGui::Button("START GAME", ImVec2(btn_width, 40.0f)))
+            if (ImGui::Button("START GAME", ImVec2(btn_width, 40.0f)) || ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_Space))
             {
                 ResetGame();
                 game_state = 1; // Switch to Playing
@@ -200,129 +208,115 @@ int main(int, char**)
         }
         else if (game_state == 1)
         {
+            float PLAYER_SIZE = 30.0f; 
+
+            float move_speed = 150.0f; // Default "Walk" speed every frame
+
             if (cooldown_timer > 0.0f) {
                 cooldown_timer -= dt;
             }
-            else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) 
-            {
-                base_speed = 300.0f;    
+            else if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) {
+                move_speed = 300.0f;    
                 sprint_timer += dt;     
                 
-                if (sprint_timer >= MAX_SPRINT_TIME) 
-                {
+                if (sprint_timer >= MAX_SPRINT_TIME) {
                     cooldown_timer = COOLDOWN_TIME; 
                     sprint_timer = 0.0f;            
                 }
             }
-            else 
-            {
-                float recovery_speed = 1.25f; 
+            else {
+                float recovery_speed = 1.5f; // Recover faster than you drain
                 sprint_timer -= recovery_speed * dt;
                 if (sprint_timer < 0.0f) sprint_timer = 0.0f;
             }
 
-            float speed = base_speed * dt;
+            float step = move_speed * dt;
 
-            if (ImGui::IsKeyDown(ImGuiKey_LeftArrow))  pos_x -= speed;
-            if (ImGui::IsKeyDown(ImGuiKey_RightArrow)) pos_x += speed;
-            if (ImGui::IsKeyDown(ImGuiKey_UpArrow))    pos_y -= speed;
-            if (ImGui::IsKeyDown(ImGuiKey_DownArrow))  pos_y += speed;
+            if (ImGui::IsKeyDown(ImGuiKey_LeftArrow) || ImGui::IsKeyDown(ImGuiKey_A)) pos_x -= step;
+            if (ImGui::IsKeyDown(ImGuiKey_RightArrow)|| ImGui::IsKeyDown(ImGuiKey_D)) pos_x += step;
+            if (ImGui::IsKeyDown(ImGuiKey_UpArrow)   || ImGui::IsKeyDown(ImGuiKey_W)) pos_y -= step;
+            if (ImGui::IsKeyDown(ImGuiKey_DownArrow) || ImGui::IsKeyDown(ImGuiKey_S)) pos_y += step;
 
-            float max_x = win_size.x - 36;
-            float max_y = win_size.y - 36;
-            if (pos_x < 0.0f)  pos_x = 0.0f;
-            if (pos_x > max_x) pos_x = max_x;
-            if (pos_y < 0.0f)  pos_y = 0.0f;
-            if (pos_y > max_y) pos_y = max_y;
+            if (pos_x < 0) pos_x = 0;
+            if (pos_y < 0) pos_y = 0;
+            if (pos_x > win_size.x - PLAYER_SIZE) pos_x = win_size.x - PLAYER_SIZE;
+            if (pos_y > win_size.y - PLAYER_SIZE) pos_y = win_size.y - PLAYER_SIZE;
 
-            if (!my_enemy.active)
+            spawn_timer -= dt;
+
+            if (spawn_timer <= 0.0f)
             {
-                int edge = rand() % 4; 
-                ImVec2 spawn_pos;
+                Enemy new_enemy;
                 
-                if (edge == 0)      { spawn_pos = ImVec2((float)(rand() % (int)win_size.x), -20.0f); } // Top
-                else if (edge == 1) { spawn_pos = ImVec2(win_size.x + 20.0f, (float)(rand() % (int)win_size.y)); } // Right
-                else if (edge == 2) { spawn_pos = ImVec2((float)(rand() % (int)win_size.x), win_size.y + 20.0f); } // Bottom
-                else                { spawn_pos = ImVec2(-20.0f, (float)(rand() % (int)win_size.y)); } // Left
+                int edge = rand() % 4;
+                ImVec2 spawn;
+                if (edge == 0) spawn = ImVec2((float)(rand() % (int)win_size.x), -20);
+                else if (edge == 1) spawn = ImVec2(win_size.x + 20, (float)(rand() % (int)win_size.y));
+                else if (edge == 2) spawn = ImVec2((float)(rand() % (int)win_size.x), win_size.y + 20);
+                else spawn = ImVec2(-20, (float)(rand() % (int)win_size.y));
 
-                my_enemy.position = spawn_pos;
+                new_enemy.position = spawn;
 
-                float delta_x = pos_x - spawn_pos.x;
-                float delta_y = pos_y - spawn_pos.y;
-                float length = sqrtf(delta_x * delta_x + delta_y * delta_y);
+                float dx = pos_x - spawn.x;
+                float dy = pos_y - spawn.y;
+                float len = sqrtf(dx*dx + dy*dy);
+                if (len > 0) { dx /= len; dy /= len; }
                 
-                if (length > 0) {
-                    delta_x /= length;
-                    delta_y /= length;
-                }
+                new_enemy.velocity = ImVec2(dx * 500.0f, dy * 500.0f);
+                
+                enemies.push_back(new_enemy);
 
-                float enemy_speed = 600.0f; // Pixels per second
-                my_enemy.velocity = ImVec2(delta_x * enemy_speed, delta_y * enemy_speed);
-                my_enemy.active = true;
+                spawn_timer = current_spawn_rate;
+
+                current_spawn_rate *= 0.98f; 
+                
+                if (current_spawn_rate < 0.2f) current_spawn_rate = 0.2f;
             }
 
-            if (my_enemy.active)
+            float player_center_x = pos_x + (PLAYER_SIZE * 0.5f);
+            float player_center_y = pos_y + (PLAYER_SIZE * 0.5f);
+            float player_radius = PLAYER_SIZE * 0.4f; 
+            float enemy_radius = 20.0f;
+
+            for (int i = enemies.size() - 1; i >= 0; i--)
             {
-                my_enemy.position.x += my_enemy.velocity.x * dt;
-                my_enemy.position.y += my_enemy.velocity.y * dt;
+                enemies[i].position.x += enemies[i].velocity.x * dt;
+                enemies[i].position.y += enemies[i].velocity.y * dt;
 
-                float player_center_x = 36;
-                float player_center_y = 36;
+                ImGui::GetWindowDrawList()->AddCircleFilled(enemies[i].position, enemy_radius, IM_COL32(255, 0, 0, 255));
 
-                float player_radius = (float)my_image_width * 0.4f;
-
-                float enemy_radius = 25.0f; 
-
-                ImGui::GetWindowDrawList()->AddCircle(
-                    ImVec2(player_center_x, player_center_y), 
-                    player_radius, 
-                    IM_COL32(0, 255, 0, 255)
-                );
-
-                float dx = player_center_x - my_enemy.position.x;
-                float dy = player_center_y - my_enemy.position.y;
-                float distance = sqrtf(dx*dx + dy*dy);
-
-                if (distance < (player_radius + enemy_radius))
+                float dx = player_center_x - enemies[i].position.x;
+                float dy = player_center_y - enemies[i].position.y;
+                if (sqrtf(dx*dx + dy*dy) < (player_radius + enemy_radius))
                 {
                     if (score > high_score) high_score = score;
-                    game_state = 2; // Go to Game Over
+                    game_state = 2; 
                 }
 
-                if (my_enemy.position.x < -100 || my_enemy.position.x > 3000 || 
-                    my_enemy.position.y < -100 || my_enemy.position.y > 3000)
+                if (enemies[i].position.x < -100 || enemies[i].position.x > win_size.x + 100 ||
+                    enemies[i].position.y < -100 || enemies[i].position.y > win_size.y + 100) 
                 {
-                    score++; // Add point!
-                    my_enemy.active = false; // Kill it so it respawns
+                    score++; // Score when you dodge them successfully
+                    enemies.erase(enemies.begin() + i); // Remove from list
                 }
             }
 
             ImGui::SetCursorPos(ImVec2(pos_x, pos_y));
-            if (my_texture) {
-                ImGui::Image((void*)my_texture, ImVec2(36, 36));
-            } else {
-                ImGui::Button("Player", ImVec2(36,36)); // Fallback
-            }
+            if (my_texture) ImGui::Image((void*)my_texture, ImVec2(PLAYER_SIZE, PLAYER_SIZE));
+            else ImGui::Button("P", ImVec2(PLAYER_SIZE, PLAYER_SIZE));
 
-            if (my_enemy.active) {
-                ImGui::GetWindowDrawList()->AddCircleFilled(my_enemy.position, 20.0f, IM_COL32(255, 255, 0, 255));
-            }
-            
             ImGui::SetCursorPos(ImVec2(20, 20));
-            ImGui::Text("Score: %d", score);
+            ImGui::Text("SCORE: %d", score);
+            ImGui::Text("Spawn Rate: %.2fs", current_spawn_rate); // Debug text so you can see it getting faster
 
-            float bar_width = 400.0f;
-            float bar_height = 30.0f;
-            float center_x = (win_size.x - bar_width) * 0.5f;
-            float bottom_y = win_size.y - bar_height - 20.0f;
-            ImGui::SetCursorPos(ImVec2(center_x, bottom_y));
-            
-            if (cooldown_timer > 0.0f) {
-                ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1.0f, 0.0f, 0.0f, 1.0f)); 
-                ImGui::ProgressBar(cooldown_timer / COOLDOWN_TIME, ImVec2(bar_width, bar_height), "OVERHEATED");
-                ImGui::PopStyleColor();
+            float bar_w = 300.0f;
+            ImGui::SetCursorPos(ImVec2((win_size.x - bar_w)*0.5f, win_size.y - 40));
+            if (cooldown_timer > 0) {
+                 ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(1,0,0,1));
+                 ImGui::ProgressBar(cooldown_timer/COOLDOWN_TIME, ImVec2(bar_w, 20), "OVERHEATED");
+                 ImGui::PopStyleColor();
             } else {
-                ImGui::ProgressBar(sprint_timer / MAX_SPRINT_TIME, ImVec2(bar_width, bar_height), "Sprint Stamina");
+                 ImGui::ProgressBar(sprint_timer/MAX_SPRINT_TIME, ImVec2(bar_w, 20), "Sprint");
             }
         }
         else if (game_state == 2)
@@ -345,7 +339,7 @@ int main(int, char**)
 
             float btn_width = 120.0f;
             ImGui::SetCursorPos(ImVec2((win_size.x - btn_width) * 0.5f, win_size.y * 0.6f));
-            if (ImGui::Button("TRY AGAIN", ImVec2(btn_width, 40.0f)))
+            if (ImGui::Button("TRY AGAIN", ImVec2(btn_width, 40.0f)) || ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_Space))
             {
                 ResetGame();
                 game_state = 1; // Restart
