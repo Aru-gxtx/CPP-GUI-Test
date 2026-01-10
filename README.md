@@ -1,5 +1,7 @@
 # CPP GUI Test
 
+![CPP GUI Preview](CPP_GUI_prev.gif)
+
 A **C++ Arcade Survival Game** built entirely using the **Dear ImGui** library.
 
 I created this project as a learning exercise to better familiarize myself with the **Dear ImGui** immediate mode GUI library. It demonstrates how to utilize ImGui not just for tools and debug menus, but for rendering real-time 2D game graphics, handling game loops, and managing collision logic.
