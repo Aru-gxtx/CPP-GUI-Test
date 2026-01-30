@@ -1,2 +1,2 @@
-g++ main.cpp imgui*.cpp -o main.exe -ld3d11 -ld3dcompiler -ldwmapi -lgdi32 -static -static-libgcc -static-libstdc++
+g++ main_3d.cpp imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp imgui_demo.cpp imgui_impl_dx11.cpp imgui_impl_win32.cpp -o main.exe -ld3d11 -ld3dcompiler -ldwmapi -lgdi32 -ldxgi -ldxguid -static -static-libgcc -static-libstdc++
 pause
