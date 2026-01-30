@@ -53,7 +53,7 @@ A fast-paced survival game where you dodge enemies and manage stamina.
 
 ## Project 2: 3DEngine (3D)
 
-![3D Engine Preview](README_assets/3DEngine_prev.mp4)
+https://github.com/user-attachments/assets/cdc111b6-e4aa-4b73-b311-01c0932a5bdd
 
 A "Minecraft-style" 3D rendering and physics engine running inside an ImGui window. This project focuses on complex 3D math and collision logic.
 
