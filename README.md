@@ -1,7 +1,5 @@
 # CPP GUI Tests
 
-![CPP GUI Preview]()
-
 A collection of **C++ Games and Tech Demos** built entirely using the **Dear ImGui** library.
 
 I created this repository as a learning exercise to master the **Dear ImGui** immediate mode GUI library. It demonstrates that ImGui can be used for more than just debug tools—it can handle real-time 2D graphics, 3D rendering, custom physics loops, and complex game state management.
