@@ -1,12 +1,8 @@
-# CPP GUI Test
+# CPP GUI Tests
 
-![CPP GUI Preview](CPP_GUI_prev.gif)
+A collection of **C++ Games and Tech Demos** built entirely using the **Dear ImGui** library.
 
-A **C++ Arcade Survival Game** built entirely using the **Dear ImGui** library.
-
-I created this project as a learning exercise to better familiarize myself with the **Dear ImGui** immediate mode GUI library. It demonstrates how to utilize ImGui not just for tools and debug menus, but for rendering real-time 2D game graphics, handling game loops, and managing collision logic.
-
-
+I created this repository as a learning exercise to master the **Dear ImGui** immediate mode GUI library. It demonstrates that ImGui can be used for more than just debug tools—it can handle real-time 2D graphics, 3D rendering, custom physics loops, and complex game state management.
 
 <p align="center">
   <a href="https://isocpp.org/">
@@ -20,60 +16,72 @@ I created this project as a learning exercise to better familiarize myself with 
   </a>
 </p>
 
-## Features
+---
 
+## Download & Installation
+
+Both projects are compiled and available for download.
+
+1.  Go to the **[Releases](../../releases)** page.
+2.  You will find **two results** (executables) available for download:
+    * `GalleDodge` (The 2D Game)
+    * `3DEngine` (The 3D Tech Demo)
+3.  Download the one you wish to try and double-click to run! (No installation needed).
+
+---
+
+## Project 1: GalleDogde (2D)
+
+A fast-paced survival game where you dodge enemies and manage stamina.
+
+### Features
 * **Infinite Difficulty Scaling:** Enemies spawn in waves. The longer you survive, the faster they spawn.
 * **Stamina System:** Sprint mechanics with a visual stamina bar and overheat cooldown punishment.
 * **Precise Hitboxes:** Dynamic circular collision detection that scales perfectly with the player's visual size.
-* **Smooth Controls:** Full support for both **WASD** and **Arrow Keys**.
-* **Game State Management:** Complete flow from Start Menu → Gameplay → Game Over screen with hotkey support.
-* **Standalone:** No installation required; runs as a single portable executable.
+* **Game State Management:** Complete flow from Start Menu → Gameplay → Game Over screen.
 
-## Installation
-
-### For Players
-1.  Go to the **[Releases](../../releases)** page.
-2.  Download the latest `.exe` file.
-3.  Double-click to play! (No Python or C++ installation needed).
-
-### For Developers (Building from Source)
-If you want to modify the code, you will need a C++ compiler (Visual Studio, MinGW, etc.) and the ImGui binaries.
-1.  Clone this repository.
-2.  Ensure you have `imgui`, `imgui_impl_win32`, and `imgui_impl_dx11` (or your backend of choice) linked.
-3.  Compile `main.cpp`.
-
-## Controls
-
+### Controls
 | Action | Key 1 | Key 2 |
 | :--- | :--- | :--- |
-| **Move Up** | `W` | `Up Arrow` |
-| **Move Down** | `S` | `Down Arrow` |
-| **Move Left** | `A` | `Left Arrow` |
-| **Move Right** | `D` | `Right Arrow` |
+| **Move** | `WASD` | `Arrow Keys` |
 | **Sprint** | `LShift` | `RShift` |
 | **Start / Retry** | `Enter` | `Space` |
 
-## How It Works (Technical)
+---
 
-Since this was a learning project for ImGui, the architecture focuses on using `ImGui::GetWindowDrawList()` for rendering rather than a traditional sprite engine.
+## Project 2: 3DEngine (3D)
 
-### 1. The Game Loop & State Machine
-The application runs inside a standard ImGui frame loop. I implemented a simple state machine to handle the game flow:
-* **State 0 (Menu):** Draws the title and "Start Game" button.
-* **State 1 (Playing):** Handles the core logic (Player movement, Enemy Vector management, Collision checks).
-* **State 2 (Game Over):** Displays the final score and high score, waiting for a reset signal.
+A "Minecraft-style" 3D rendering and physics engine running inside an ImGui window. This project focuses on complex 3D math and collision logic.
 
-### 2. Rendering
-Instead of loading sprites into a game engine, this project uses:
-* `ImGui::Image()` for the player character.
-* `ImGui::GetWindowDrawList()->AddCircleFilled()` for drawing enemies efficiently.
-* `ImGui::ProgressBar()` for the UI stamina bar.
+### Features
+* **3D Camera System:** Full First-Person mouse look (Yaw/Pitch) and movement.
+* **Advanced Physics:** Gravity acceleration, jumping mechanics, and velocity-based movement.
+* **Voxel Collision:**
+    * **AABB Collision:** Prevents clipping through blocks.
+    * **Wall Sliding:** Smart axis-separation allowing players to slide along walls rather than getting stuck.
+    * **Step Logic:** Automatically detects if a block is low enough to step on or requires a jump.
+* **Terrain Generation:** Renders a voxel-based world grid.
 
-### 3. Collision Logic
-To ensure fairness, the collision system uses **Circle-to-Circle** intersection.
-* **Player Hitbox:** Calculated dynamically as `Player_Width * 0.4` to ensure the hitbox centers on the character model regardless of the image size.
-* **Enemy Hitbox:** Fixed radius to match the visual red circles.
-* **Math:** Uses standard Euclidean distance formula $\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}$ to determine hits.
+### Controls
+| Action | Key |
+| :--- | :--- |
+| **Move** | `WASD` |
+| **Look** | `Mouse` |
+| **Jump** | `Space` |
+
+---
+
+## Technical Details (How It Works)
+
+Since this was a learning project, the architecture focuses on pushing `ImGui::GetWindowDrawList()` to its limits.
+
+### 1. Rendering Strategy
+* **2D Mode:** Uses `AddCircleFilled()` for enemies and `ImGui::Image()` for the player.
+* **3D Mode:** Projects 3D world coordinates into 2D screen space using a custom Camera Matrix (Perspective Projection), then draws quads using the DrawList API to simulate 3D blocks.
+
+### 2. Collision Logic
+* **2D Collision:** Uses Euclidean distance $\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}$ for Circle-to-Circle checks.
+* **3D Collision:** Implements strictly defined bounding boxes. It checks "future positions" (velocity integration) against the terrain heightmap to determine if a move is valid, if the player should slide, or if gravity should apply.
 
 ## Acknowledgments
 
