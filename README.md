@@ -32,6 +32,8 @@ Both projects are compiled and available for download.
 
 ## Project 1: GalleDogde (2D)
 
+![Galledodge Preview](README_assets/GalleDodge_prev.gif)
+
 A fast-paced survival game where you dodge enemies and manage stamina.
 
 ### Features
@@ -50,6 +52,8 @@ A fast-paced survival game where you dodge enemies and manage stamina.
 ---
 
 ## Project 2: 3DEngine (3D)
+
+![3D Engine Preview](3DEngine_prev.mp4)
 
 A "Minecraft-style" 3D rendering and physics engine running inside an ImGui window. This project focuses on complex 3D math and collision logic.
 
