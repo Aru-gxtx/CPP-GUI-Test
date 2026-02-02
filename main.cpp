@@ -145,7 +145,7 @@ int main(int, char**)
     int my_image_width = 0;
     int my_image_height = 0;
     ID3D11ShaderResourceView* my_texture = NULL;
-    bool ret = LoadTextureFromFile("gallegodz.png", &my_texture, &my_image_width, &my_image_height);
+    bool ret = LoadTextureFromFile("mc.png", &my_texture, &my_image_width, &my_image_height);
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     bool done = false;
@@ -192,7 +192,7 @@ int main(int, char**)
         float dt = io.DeltaTime;
         if (game_state == 0)
         {
-            const char* title = "GalleDodge";
+            const char* title = "GDodge";
             float text_width = ImGui::CalcTextSize(title).x;
             ImGui::SetCursorPos(ImVec2((win_size.x - text_width) * 0.5f, win_size.y * 0.4f));
             ImGui::Text(title);
