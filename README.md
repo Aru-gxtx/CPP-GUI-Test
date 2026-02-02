@@ -2,7 +2,7 @@
 
 A collection of **C++ Games and Tech Demos** built entirely using the **Dear ImGui** library.
 
-I created this repository as a learning exercise to master the **Dear ImGui** immediate mode GUI library. It demonstrates that ImGui can be used for more than just debug tools—it can handle real-time 2D graphics, 3D rendering, custom physics loops, and complex game state management.
+I created this repository as a learning exercise to master the **Dear ImGui** immediate mode GUI library.
 
 <p align="center">
   <a href="https://isocpp.org/">
@@ -23,20 +23,23 @@ I created this repository as a learning exercise to master the **Dear ImGui** im
 Both projects are compiled and available for download.
 
 1.  Go to the **[Releases](../../releases)** page.
-2.  You will find **two results** (executables) available for download:
-    * `GalleDodge` (The 2D Game)
-    * `3DEngine` (The 3D Tech Demo)
-3.  Download the one you wish to try and double-click to run! (No installation needed).
+2.  Download the `.zip` file for the project you wish to try.
+3.  **Extract the Zip:** It is important to extract all files into a folder.
+4.  Double-click the `.exe` to run! (No installation needed).
+
+> [!TIP]
+> **Customization:** For GDodge, you can change your character's look! Simply replace the `mc.png` file in the folder with any other PNG image (just keep the name the same).
 
 ---
 
-## Project 1: GalleDogde (2D)
+## Project 1: GDodge (2D)
 
-![Galledodge Preview](README_assets/GalleDodge_prev.gif)
+![GDodge Preview](README_assets/GDodge_prev.gif)
 
 A fast-paced survival game where you dodge enemies and manage stamina.
 
 ### Features
+* **Custom Characters:** Change your player sprite by swapping the `mc.png` file in the game directory.
 * **Infinite Difficulty Scaling:** Enemies spawn in waves. The longer you survive, the faster they spawn.
 * **Stamina System:** Sprint mechanics with a visual stamina bar and overheat cooldown punishment.
 * **Precise Hitboxes:** Dynamic circular collision detection that scales perfectly with the player's visual size.
@@ -80,7 +83,7 @@ A "Minecraft-style" 3D rendering and physics engine running inside an ImGui wind
 Since this was a learning project, the architecture focuses on pushing `ImGui::GetWindowDrawList()` to its limits.
 
 ### 1. Rendering Strategy
-* **2D Mode:** Uses `AddCircleFilled()` for enemies and `ImGui::Image()` for the player.
+* **2D Mode:** Uses `AddCircleFilled()` for enemies and `ImGui::Image()` for the player. The player texture is loaded dynamically via `stb_image`.
 * **3D Mode:** Projects 3D world coordinates into 2D screen space using a custom Camera Matrix (Perspective Projection), then draws quads using the DrawList API to simulate 3D blocks.
 
 ### 2. Collision Logic
